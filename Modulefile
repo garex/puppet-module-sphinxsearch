@@ -1,8 +1,8 @@
-name    'saz-sphinxsearch'
+name 'saz-sphinxsearch'
 version '1.0.0'
-source 'https://github.com/saz/puppet-sphinxsearch'
+
 author 'saz'
 license 'Apache License, Version 2.0'
-description 'Manage sphinxsearch via Puppet'
 project_page 'https://github.com/saz/puppet-sphinxsearch'
-dependency 'puppetlabs/stdlib', '>= 2.0.0'
+source 'https://github.com/saz/puppet-sphinxsearch'
+description 'Manage sphinxsearch via Puppet'

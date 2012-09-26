@@ -119,15 +119,6 @@ class sphinxsearch(
   $firewall_dst = false
 ) inherits sphinxsearch::params {
 
-  validate_bool(
-    $autoupgrade,
-    $service_enable,
-    $service_hasstatus,
-    $service_hasrestart,
-    $monitor,
-    $firewall
-  )
-
   case $ensure {
     present: {
       if $autoupgrade == true {
@@ -159,6 +150,21 @@ class sphinxsearch(
     }
   }
 
+  group {"Add sphinx group":
+    name    => $group,
+    ensure  => "present",
+  }
+
+  user {"Add sphinx user":
+    require => Group["Add sphinx group"],
+    name    => $user,
+    ensure  => "present",
+    gid     => $group,
+    home    => $work_dir,
+    comment => "Sphinx -- search daemon",
+    shell   => "/bin/bash",
+  }
+
   package { $package:
     ensure => $package_ensure,
   }
@@ -169,7 +175,7 @@ class sphinxsearch(
     group   => 'root',
     mode    => '0644',
     content => template('sphinxsearch/default-searchd.erb'),
-    require => Package[$package],
+    require => [Package[$package], User["Add sphinx user"]],
     notify  => Service[$service],
   }
 
@@ -202,15 +208,23 @@ class sphinxsearch(
     config_dir => $config_dir,
     user       => $user,
     group      => $group,
-    require    => File[$work_dir],
+    service    => $service,
     notify     => Service[$service],
   }
+  File [$work_dir] -> Sphinxsearch::Instance [$instances]
 
-  service { $service:
+  exec {"Initial sphinx index":
+    require    => Sphinxsearch::Instance [$instances],
+    command    => "/usr/bin/indexer --all --rotate",
+    onlyif     => 'test ! -f /var/run/searchd.pid',
+    notify     => Service[$service]
+  }
+
+  service {$service:
     ensure     => $service_ensure,
     enable     => $service_enable,
     hasstatus  => $service_hasstatus,
     hasrestart => $service_hasrestart,
-    require    => Package[$package],
+    require    => [Package[$package], Exec["Initial sphinx index"]],
   }
 }

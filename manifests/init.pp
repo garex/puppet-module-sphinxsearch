@@ -119,15 +119,6 @@ class sphinxsearch(
   $firewall_dst = false
 ) inherits sphinxsearch::params {
 
-  validate_bool(
-    $autoupgrade,
-    $service_enable,
-    $service_hasstatus,
-    $service_hasrestart,
-    $monitor,
-    $firewall
-  )
-
   case $ensure {
     present: {
       if $autoupgrade == true {
